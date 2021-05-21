@@ -45,14 +45,14 @@ Output_iLQR =Output;
 for i=1:num_sims
 %    rndIdx = randi(length(fwdU), 1); %random index 
 %    cntrl = fwdU; %Feedforward Gain
-   for idx=1:Nb
+   for idx=1:Nb*2
        cntrl(idx,:) = NoiseGen(N); 
    end
-    Out_ddp=DDP_Regular_ABA_Methods(0,N,cntrl)
+    Out_ddp=DDP_Regular_ABA_Methods_LBR(0,N,cntrl)
 %    Out_ddp = DDP_Regular_OldMethod(Nb,0,N,1,0,cntrl);
    Output(:,i) = [Out_ddp.Vstore(end),sum(Out_ddp.Vstore),Out_ddp.Time,Out_ddp.Iters];
 %    Out_ilqr = DDP_Regular_OldMethod(Nb,1,N,1,0,cntrl);
-    Out_ilqr = DDP_Regular_ABA_Methods(1,N,cntrl)
+    Out_ilqr = DDP_Regular_ABA_Methods_LBR(1,N,cntrl)
    Output_iLQR(:,i) = [Out_ilqr.Vstore(end),sum(Out_ilqr.Vstore),Out_ilqr.Time,Out_ilqr.Iters];
 end
 

@@ -1,4 +1,4 @@
-function Out = DDP_Regular_ABA_Methods(iLQR,N,cntrl) %'end' is 351 
+function Out = DDP_Regular_ABA_Methods_LBR(iLQR,N,cntrl) %'end' is 351 
 
 
 % iLQR = 0; 
@@ -188,7 +188,7 @@ xbar(:,1) = x0; %Store states
 xi = x0;
 % xi = zeros(size(x0));xi(2)=pi/2*.70;
 
-Kp = 0.008;
+Kp = .08; Kd =.002 ;
 % Make initial Guess
 for i = 1:(params.N-1)
     
@@ -200,7 +200,9 @@ for i = 1:(params.N-1)
     %use the randomization purely
 %        ui = cntrl(:,i);
 
-       ui =  Kp *(xi(ceil(length(xi)/2)) - cntrl(:,i));
+    q  = xi(1:Nb); qd = xi(Nb+1:end);
+    ui =  Kp *(q - cntrl(1:Nb,i)) + ... 
+           Kd*(qd - cntrl(Nb+1:end,i)) ;
 %        ui = ui(1:end-1); %Too much 
 
     ubar(:,i) = ui;
@@ -208,26 +210,31 @@ for i = 1:(params.N-1)
     xbar(:,i+1) = xi;
 end
 
-%{
-close all;
+%Close next line to close the init guess plots
+%
+close all; 
+figure; hold on
 for i = 1:(Nb)
-    figure; 
-    hold on 
-    h=plot(xbar(i,:),'DisplayName','state');h.LineWidth = 2;
-    if  i==2
-       b = plot(pi/2*ones(1,length(xbar)),'k--','DisplayName','pi/2 line');
-       b.LineWidth =2;
-    else    
-        b=plot(zeros(1,length(xbar)),'k--','DisplayName','zero line');
-        b.LineWidth =2;
-    end
-    legend
-    hold off 
+    f = sprintf('State q %i',i);
+    h=plot(xbar(i,:),'DisplayName',f);h.LineWidth = 2; 
 end
+b=plot(zeros(1,length(xbar)),'k--','DisplayName','zero line');
+b.LineWidth =2;
+hold off; legend
+
+figure; hold on
+for i = 1:(Nb)
+    f = sprintf('State qd %i',i);
+    h=plot(xbar(Nb+i,:),'DisplayName',f);h.LineWidth = 2; 
+end
+b=plot(zeros(1,length(xbar)),'k--','DisplayName','zero line');
+b.LineWidth =2;
+hold off; legend
+
 
 fprintf('\nPaused at line 239\n') 
 %}
-plot(xbar(1,:))
+
 1==1;
 % xbar(1,1) = nan;
 if any(isnan(xbar(:)))
