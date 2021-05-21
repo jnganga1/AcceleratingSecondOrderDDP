@@ -1,4 +1,4 @@
-function funcs = GetDerivativeFunctionsAlt(model, second_order)
+function funcs = GetDerivativeFunctionsAlt_LBR(model, second_order)
     import casadi.*
     
     % Casadi symbolics

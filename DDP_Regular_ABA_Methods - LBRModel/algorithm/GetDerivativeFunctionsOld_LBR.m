@@ -1,4 +1,4 @@
-function funcs = GetDerivativeFunctionsOld(model,second_order)
+function funcs = GetDerivativeFunctionsOld_LBR(model,second_order)
     import casadi.*
     
     % Casadi symbolics

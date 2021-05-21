@@ -78,7 +78,7 @@ if iLQR
     second_order = 0;
 end
 fprintf('\tComputing Direct Functions\n');
-ABA_Deriv_Funcs = GetDerivativeFunctionsDirect(model,second_order);
+ABA_Deriv_Funcs = GetDerivativeFunctionsDirect_LBR(model,second_order);
 % fprintf('\tComputing Alt Functions\n');
 % ABA_Deriv_via_RNEA_Funcs    = GetDerivativeFunctionsAlt(model,second_order);
 % fprintf('\tComputing Old Functions\n');
@@ -101,7 +101,7 @@ dt= 0.0025;
 params.N = N;
 params.dt = dt; %Incase I use it in other scripts 
 
-load('x0Stored.mat','x0');
+% load('x0Stored.mat','x0');
 % x0 = [1.5*rand(Nb,1);zeros(Nb,1)];
 % x0(1) = -pi/2 + 0.5*pi/2 ;% First link
 % x0(rbtNmber) = pi/2;

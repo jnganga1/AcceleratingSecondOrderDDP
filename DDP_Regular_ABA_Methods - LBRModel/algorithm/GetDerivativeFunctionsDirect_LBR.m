@@ -1,4 +1,4 @@
-function funcs = GetDerivativeFunctionsDirect(model, second_order, direction)
+function funcs = GetDerivativeFunctionsDirect_LBR(model, second_order, direction)
 import casadi.*
 
     if nargin <=2
