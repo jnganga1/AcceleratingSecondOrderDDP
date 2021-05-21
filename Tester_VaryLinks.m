@@ -8,9 +8,9 @@
 rbtNmber =1;
 x0_diff = 0.15;
 
-N = 150;
+N = 400;
 % nbd = [2 3 4 5 7 9 12 16 22 26 30];
-nbd = [2 5 10 14 16 20 22]; % 25 30];
+nbd = [2 4 6 10 15 19 20 22]; % 25 30];
 % nbd=[20 25 30 35 40]%16 20];
 % nbd = 15;
 
@@ -27,8 +27,8 @@ for iNb = nbd
     timer = zeros(1,nmbRepts); iterI= timer;
     iterD = timer; timer_iLQR =timer;
     for iRepts=1:nmbRepts
-        Out= DDP_Regular_ABA_Methods(iNb,2,0,N,rbtNmber,x0_diff);
-        OutiLQR= DDP_Regular_ABA_Methods(iNb,2,1,N,rbtNmber,x0_diff);
+        Out= DDP_Regular_ABA_Methods(5,2,0,N,rbtNmber,x0_diff); %DDP
+        OutiLQR= DDP_Regular_ABA_Methods(2,2,1,N,rbtNmber,x0_diff);%iLQR
         timer(iRepts)= Out.Time;
         timer_iLQR(iRepts)= OutiLQR.Time;
         iterI(iRepts) = OutiLQR.Iters;
@@ -96,7 +96,7 @@ for iNb =nbd
         Out= DDP_Regular_OldMethod(iNb,0,N,rbtNmber,x0_diff); %DDP
         OutiLQR =DDP_Regular_OldMethod(iNb,1,N,rbtNmber,x0_diff);  %iLQR
         timer(iRepts)= Out.Time;
-        timeriLQR(iRepts)= OutiLQR.Time;
+        timer_iLQR(iRepts)= OutiLQR.Time;
         iterD(iRepts)= Out.Iters; 
         iterI(iRepts)= OutiLQR.Iters;
     end
@@ -104,7 +104,7 @@ for iNb =nbd
     VstoreOld_iLQR = OutiLQR.Vstore;
     
     Old_Time(end+1) = mean(timer);
-    Old_Time_iLQR(end+1) = mean(timeriLQR);
+    Old_Time_iLQR(end+1) = mean(timer_iLQR);
     
     Old_Iters(end+1) = mean(iterD);
     Old_Iters_iLQR(end+1) = mean(iterI);
@@ -113,6 +113,8 @@ end
 
 1==1;
 %% Some plots
+
+nbd = [2 4 6 10 15 19 20];
 figure;
 hold on;
 set(gca, 'YScale','log');
@@ -143,13 +145,13 @@ end
 figure; 
 %DDP
 hold on
-A0=loglog(nbd,Timer_ABA,'b-o'); hold on
-A1=loglog(nbd,Timer_RNEA,'k-o');
-A1_2=loglog(nbd,TimerRNEA_Carp,'m-o');
+A0=loglog(nbd,Timer_ABA(1:end-1),'b-o'); hold on
+A1=loglog(nbd,Timer_RNEA(1:end-1),'k-o');
+A1_2=loglog(nbd,TimerRNEA_Carp(1:end-1),'m-o');
 A2=loglog(nbd,Old_Time,'r-o');
 %iLQR
-A3=loglog(nbd,Timer_ABA_iLQR,'b-.s');
-A4=loglog(nbd,Timer_RNEA_iLQR,'k-.s');
+A3=loglog(nbd,Timer_ABA_iLQR(1:end-1),'b-.s');
+A4=loglog(nbd,Timer_RNEA_iLQR(1:end-1),'k-.s');
 A5=loglog(nbd,Old_Time_iLQR,'r-.s');
 
 if rbtNmber==1
@@ -176,12 +178,12 @@ set(gca,'Fontsize',15)
 xlim([nbd(1) nbd(end)]);
 xticks(nbd);
 grid on
-
+set(gca,'Yscale','linear')
 
 
 figure; 
-bp=boxplot([Timer_RNEA',Timer_ABA',TimerRNEA_Carp',Old_Time',...
-    Timer_ABA_iLQR',Timer_RNEA_iLQR'],'labels',{A0.DisplayName,...
+bp=boxplot([Timer_RNEA(1:end-1)',Timer_ABA(1:end-1)',TimerRNEA_Carp(1:end-1)',Old_Time',...
+    Timer_ABA_iLQR(1:end-1)',Timer_RNEA_iLQR(1:end-1)'],'labels',{A0.DisplayName,...
     A1.DisplayName,A1_2.DisplayName, A2.DisplayName,...
     A3.DisplayName,A4.DisplayName} );
 xtickangle(20)
@@ -190,3 +192,23 @@ set(gca,'FontSize',12);
 set(bp,'LineWidth', 2);
 title('Evaluation Time for $n=2$ to $n=20$ Acrobot','Interpreter','latex')
 ylabel('Time')
+
+
+
+figure; 
+bp=boxplot([Iters_RNEA(1:end-1)',Iters_ABA(1:end-1)',ItersRNEA_Carp(1:end-1)',Old_Iters',...
+    Iters_ABA_iLQR(1:end-1)',Iters_RNEA_iLQR(1:end-1)'],'labels',{A0.DisplayName,...
+    A1.DisplayName,A1_2.DisplayName, A2.DisplayName,...
+    A3.DisplayName,A4.DisplayName} );
+xtickangle(20)
+set(gca, 'YScale', 'log')
+set(gca,'FontSize',12);
+set(bp,'LineWidth', 2);
+% title('Evaluation Time for $n=2$ to $n=20$ Acrobot','Interpreter','latex')
+ylabel('Iters')
+
+
+
+
+%%
+

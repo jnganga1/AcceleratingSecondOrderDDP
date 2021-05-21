@@ -1,12 +1,6 @@
-function Out = DDP_Regular_ABA_Methods(Nb,ver,iLQR,N,rbtNmber,x0_diff) %'end' is 351 
+function Out = DDP_Regular_Acrobot(Nb) %'end' is 351 
 
-% ver=1;
-% Nb=4;
 % profile on -history 
-
-
-
-%
 
 addpath([pwd '/algorithm']);
 addpath([pwd '/support']);
@@ -33,25 +27,21 @@ params.x_size =x_size;
 sz = (Nb) * [1 1 1]; %Size of reshape of second derivs 
 params.sz = sz;     
 fprintf('Nb = %d \n',Nb);
- 
-% rbtNmber= 1;
+    
 % Generate the model
 branching_factor = 1; %1=chain, 2=binary tree
 skewing = pi/exp(1);  %0->2D mechanism, anything else -> 3D mechanism
 % model = autoTree( Nb, branching_factor, skewing);
-n = Nb;
-model= robotModel(1/n,1/n,Nb,rbtNmber);
+n = Nb-1;
+model= robotModel(1/n,1/n,Nb,2);
 
-second_order =1;
-if iLQR
-    second_order = 0;
-end
+second_order = 1;
 fprintf('\tComputing Direct Functions\n');
 ABA_Deriv_Funcs = GetDerivativeFunctionsDirect(model,second_order);
-% fprintf('\tComputing Alt Functions\n');
-% ABA_Deriv_via_RNEA_Funcs    = GetDerivativeFunctionsAlt(model,second_order);
-% fprintf('\tComputing Old Functions\n');
-% funcsOld = GetDerivativeFunctionsOld(model,second_order);
+fprintf('\tComputing Alt Functions\n');
+ABA_Deriv_via_RNEA_Funcs    = GetDerivativeFunctionsAlt(model,second_order);
+fprintf('\tComputing Old Functions\n');
+funcsOld = GetDerivativeFunctionsOld(model,second_order);
 
 %fnVar:: 1 = ABA_Deriv_Funcs
 %fnVar:: 2 = ABA_Deriv_via_RNEA_Funcs
@@ -63,31 +53,26 @@ ABA_Deriv_Funcs = GetDerivativeFunctionsDirect(model,second_order);
 % dt = 0.03; %state Initialization
 % dt = 0.025*10^-1; %Cartpole
 
-% N = 150;
-dt= 0.0025;
-% dt =0.03;
-
+N = 150;
+dt= 0.03;
 params.N = N;
 params.dt = dt; %Incase I use it in other scripts 
 
 x0 = zeros(size(x_MX));
 % x0(1) = -pi/2 + 0.5*pi/2 ;% First link
-x0(rbtNmber) = -pi/2;
-x0 = x0 + x0_diff;
-% % x0(rbtNmber) = pi/2 + x0_diff;
-% x0(rbtNmber+1) =pi/2 + x0_diff; 
+x0(2) = pi/2 + 0.15;%
 % x0 = x0';
 
 q_desired= zeros(size(q_MX));
 qd_desired=zeros(size(qd_MX));
 u_desired = zeros(length(u),1);
-q_desired(rbtNmber) = pi/2;
+q_desired(2) = pi/2;
 
-R = diag(500*ones(1,u_size)); 
-Q_pos = diag(900*ones(1,size(q_MX,1)));
-Q_vel = diag(400*ones(1,size(q_MX,1))); 
+R = diag(1200*ones(1,u_size)); 
+Q_pos = diag(700*ones(1,size(q_MX,1)));
+Q_vel = diag(800*ones(1,size(q_MX,1))); 
 Q = [Q_pos zeros(size(Q_pos));zeros(size(Q_vel)) Q_vel];
-Q(1,1) = 1200;
+Q(2,2) = 2000;
 x_desired= [q_desired;qd_desired];
 
 
@@ -99,20 +84,15 @@ vars = [x_MX; u];
 %Lqr Mats
 x_size = length(x_desired);
 qd_x=[zeros([length(q_MX) length(q_MX)]) eye(length(q_MX))];
-A1 =  ABA_Deriv_Funcs.q(q_desired,qd_desired,u_desired);  
-A2 =  ABA_Deriv_Funcs.qd(q_desired,qd_desired);  
+A1 =  funcsOld.q(q_desired,qd_desired,u_desired);  
+A2 =  funcsOld.qd(q_desired,qd_desired);  
 A = [full(A1)';full(A2)']; 
 A = eye(x_size,x_size) + [qd_x;A']*dt;
-B = full(ABA_Deriv_Funcs.tau(q_desired))*dt;
+B = full(funcsOld.tau(q_desired))*dt;
 B = [zeros(length(u)+1,length(u)); B(:,1:length(u))]; 
 
-contrMat = ctrb(A,B); 
-if ~(rank(A) == rank(contrMat))
-    warning('Pair not controllable');   
-    1==1;
-end
 
-[P,~,G] = dare(A,B,Q,R);
+[P,~,G] = dare(A,B,Q*dt*2,R*dt*2);
 % P(1,1)=P(1,1)*70;
 LF   = 1/2*(x_MX-x_desired)'*P*(x_MX-x_desired);  
 
@@ -126,7 +106,7 @@ Lfunc.Luu =Function('Luu', {x_MX}, { hessian(l,u)});
 Lfunc.LF = Function('LF', {x_MX},{LF});
 Lfunc.LFderivs = Function('LFderivs', {x_MX},{jacobian(LF,x_MX),hessian(LF,x_MX)});
 
-params.ver = ver; 
+
 params.F = ABA_Deriv_Funcs; 
 params.L = Lfunc;
 1==1;
@@ -134,7 +114,7 @@ params.L = Lfunc;
 %}
 %%
 % Parameters
-params.iLQR = iLQR;
+params.iLQR = 0;
 params.N = N;
 
 params.beta = .5;
@@ -161,10 +141,10 @@ xi = x0;
 % Make initial Guess
 for i = 1:(params.N-1)
     
-%     ui = -G*(xi-x_desired);% + .05*rand(Nb-1,1);
+    ui = -G*(xi-x_desired);
 %     ui = 0;
 %     + noiselvl(1:length(u),i)*.75;
-     ui = -.0025*(xi(ceil(length(xi)/2)+1:end-1)); 
+%      ui = -.50*xi(ceil(length(xi)/2)+1:end-1); 
 
 
     ubar(:,i) = ui;
@@ -172,9 +152,9 @@ for i = 1:(params.N-1)
     xbar(:,i+1) = xi;
 end
 
-%{
+
 close all;
-for i = 1:(Nb)
+for i = 1:(Nb)*2 
     figure; 
     hold on 
     h=plot(xbar(i,:),'DisplayName','state');h.LineWidth = 2;
@@ -188,13 +168,11 @@ for i = 1:(Nb)
     legend
     hold off 
 end
-
+ 
 fprintf('\nPaused at line 239\n') 
-%}
-1==1;
 
+1==1
 
-%}
 
 %%
 [Vbar, xbar, ubar] = ForwardPass(xbar, ubar, du, K,1, params);
@@ -215,18 +193,14 @@ rho_store = [];FwdTrkcnter = [];BckTrkcnter=[];
 Tracker.BckSuccess = 0; Tracker.FwdSuccess = 0;
 Tracker.BckNonSuccess = 0; Tracker.FwdNonSuccess = 0;
 
-% xf_dev = []; 
-iterTimerTracker=[];
+
 while 1 == 1
     iter= iter+1
-    iterStart = tic;
-    params.iter =iter;
-    
+
     % Backward Pass 
     if params.iLQR
-        [dV, Vx, Vxx, du, K] = BackwardPass_ABA(xbar, ubar, params);
-        warning('Doing iLQR');
-        BckTrkcnt=0;
+        [dV, Vx, Vxx, du, K] = BackwardPass(xbar, ubar, params);
+        warning('Doing iLQR'); pause;
     else % It is full second order DDP, so we must be careful
         success = 0;BckTrkcnt = 0;
         while success == 0
@@ -234,7 +208,7 @@ while 1 == 1
                 fprintf('\t reg=%.3e\n',regularization);
             end
             bckTime = tic;
-            [dV, Vx, Vxx, du, K, success] = BackwardPass_ABA(xbar, ubar, params,regularization);
+            [dV, Vx, Vxx, du, K, success] = BackwardPass(xbar, ubar, params,regularization);
             bckEndTime = toc(bckTime);
             if success == 0
                 regularization = max(regularization*4, 1e-3);
@@ -248,22 +222,14 @@ while 1 == 1
             regularization = 0;
         end
     end
-%     if iter ==5 
-%         1==1;
-% %         qdd_func =  ABA_Deriv_Funcs.qddABA;
-%         save('DDP_gains.mat','du','K','xbar','ubar','params')
-%         save('iLQR_gains.mat','du','K','xbar','ubar','params')
-%     end
-%     
+    
     Vprev = Vbar;
-    xprev =xbar; 
   
     %% Forward pass : Stepsize selection via backtracking line search
     [Vbar, xbar, ubar,rho,ThreeNumbers] = ForwardIteration(xbar, ubar, Vprev, du, K, dV , params);
     Tracker.FwdSuccess =  Tracker.FwdSuccess + ThreeNumbers.FwdSuc;  
     Tracker.FwdNonSuccess = Tracker.FwdNonSuccess + ThreeNumbers.FwdNonSuc;
     
-%     xf_dev(end+1) = norm(xbar(1:Nb*2,end)- xprev(1:Nb*2,end));
     Vstore(end+1) = Vbar;
     Change = Vprev - Vbar 
     rho_store(end+1)=rho;
@@ -282,26 +248,21 @@ while 1 == 1
 %     end
     
 
-      iterTimerTracker(end+1)=toc(iterStart);
+      
 %     iter = iter+1;
     if Change < 1e-9
         fprintf('CONVERGED: Change: %f',Change)
         break
     end
 end
-Out.Vstore = Vstore;
-Out.Time = toc(DDPstart);
-Out.iterTimerTracker = iterTimerTracker; 
-Out.Iters = iter;
+outTime = toc(DDPstart);
+fprintf('Total time for DDP w/ TrustRegion was: %f\n seconds',outTime)
+profview
+
 1==1;
-% Out.xf_dev = xf_dev;
-% fprintf('Total time for DDP w/ TrustRegion was: %f\n seconds',outTime)
-
-
 
 %% Plots 
-%Undo The next %{ for plots
-%{
+
 time = 0:dt:dt*(params.N-1); eTime = ceil(dt*(params.N-1)); 
 close all 
 for i=1:length(q_MX)
@@ -395,11 +356,12 @@ set(gca, 'xticklabel',xvals)
 legend('location','best')
 title('Relative Time Spent')
 
+
+return
+
+
 %}
-end
-
-
-%{
+%%
 fprintf('Final V: %.3f',Vbar) 
 fprintf('Iters: %i',iter)
 
@@ -427,7 +389,7 @@ for iFig = 1:length(FigList)
 end
 
 % end
-%}
+
 
 function robot = robotModel(mass_pole,length_pole,N_links,whichRobot) 
 %1 == acrobot 
@@ -478,7 +440,6 @@ else
 
         for i=3:N_links
             robot.jtype{i} = 'r'; %Revolute in +z1; 
-            
             robot.Xtree{i} = plnr(0,[length_pole 0]); 
     %           robot.Xtree{i+1} = xlt([length_pole 0 0]);
             robot.I{i}= mcI( mass_pole, [length_pole 0], 0 );

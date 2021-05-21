@@ -1,4 +1,4 @@
-function [Hx, Hu,Qxx, Quu, Qux] = CasadiQinfoILQR(xi,ui, Vxi, Vxxi,params)
+function [Hx, Hu,Qxx, Quu, Qux] = CasadiQinfoILQR_RNEA(xi,ui, Vxi, Vxxi,params)
 
 % Some definitions    
 x_size = length(xi);

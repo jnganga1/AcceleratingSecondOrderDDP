@@ -1,17 +1,17 @@
-function [Hx, Hu,Qxx, Quu, Qux] = CasadiQinfoILQR_ABA(xi,ui, Vxi, Vxxi,params)
+function [Hx, Hu,Qxx, Quu, Qux] = CasadiQinfoILQR(xi,ui, Vxi, Vxxi,params)
 
 % Some definitions    
 x_size = length(xi);
 q =xi(1:length(xi)/2); 
 qd = xi(length(xi)/2+1:end);
-% ui_un = ui;
-% ui = [ui;0];
-sz = params.sz(1);
+ui_un = ui;
+ui = [ui;0];
+sz = params.sz;
 dt = params.dt;
 
 lambda = Vxi;
 
-M =params.F.all_first(q,qd,ui);
+M =params.F.all_first(q,qd,ui_un);
 AJ = full(M(:,1:sz*2)'); 
 BJ = full(M(:,sz*2+1:end)*dt);
 
@@ -22,11 +22,11 @@ qd_x=[zeros([length(q) length(q)]) eye(length(q))];
 % A = [full(A1)';full(A2)']; %
 fx = eye(x_size,x_size) + [qd_x;AJ']*dt;
 % B = full(params.F.tau(q))*dt; %
-fu = [zeros(length(ui)+1,length(ui)); BJ(:,1:length(ui))]; 
+fu = [zeros(length(ui_un),length(ui_un)); BJ(:,1:length(ui_un))]; 
 
 
 lx = full(params.L.Lx(xi)); 
-lu = full(params.L.Lu(ui)); 
+lu = full(params.L.Lu(ui_un)); 
 
 Hx = (lx + lambda'*fx)'; %Hx = lx + lambda'*fx 
 Hu = (lu + lambda'*fu)'; %Hu = lu + lambda'*fu
@@ -34,11 +34,11 @@ Hu = (lu + lambda'*fu)'; %Hu = lu + lambda'*fu
 lxx = full(params.L.Lxx(xi));
 Hxx = lxx;
 
-% Hux = full(params.L.Lux(xi,ui)); %This is just zero
+Hux = full(params.L.Lux(xi,ui_un)); %This is just zero
 Huu = full(params.L.Luu(xi));
 
 Qxx = Hxx + fx'*Vxxi*fx; Qxx = .5 *(Qxx + Qxx'); % good
-Qux = fu'*Vxxi*fx; % good
+Qux = Hux + fu'*Vxxi*fx; % good
 Quu = Huu + fu'*Vxxi*fu; Quu = 0.5*(Quu+Quu');  
 
 end

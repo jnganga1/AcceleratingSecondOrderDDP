@@ -1,12 +1,43 @@
-function Out = DDP_Regular_ABA_Methods(Nb,ver,iLQR,N,rbtNmber,x0_diff) %'end' is 351 
-
-% ver=1;
-% Nb=4;
-% profile on -history 
+function Out = DDP_Regular_ABA_Methods(iLQR,N,cntrl) %'end' is 351 
 
 
+% iLQR = 0; 
+ver =2; 
+% N =700; 
+rbtNmber = 1; 
+x0_diff = zeros(14,1);
+%%
 
-%
+addpath(genpath(pwd));
+
+%import the model
+lbr = importrobot('iiwa14.urdf');
+lbr.DataFormat = 'column';
+% gripper = 'iiwa_link_ee_kuka';
+lbr.Gravity = [0 0 -9.81];
+
+Imat  =  @(Ivct) [ Ivct(1) Ivct(4) Ivct(6);...
+    Ivct(4) Ivct(2) Ivct(5); Ivct(6) Ivct(5) Ivct(3)]; %By diag
+
+
+nbd = 7; Nb = nbd;
+idx=1;
+I=cell(1,nbd);
+X=cell(1,nbd);
+com=cell(1,nbd);
+mass=cell(1,nbd);
+for i = 2:2+nbd
+    I{idx} = Imat(lbr.Bodies{i}.Inertia);
+    X{idx}=pluho(lbr.Bodies{i+1}.Joint.JointToParentTransform) ; 
+    mass{idx}=lbr.Bodies{i}.Mass;
+    com{idx}=lbr.Bodies{i}.CenterOfMass;
+    lbr.Bodies{i}.Joint.JointAxis;
+    idx=idx+1;
+    
+end
+model = LBRrobotModel(I,X,mass,com,nbd);
+
+%% DDP preliminaries
 
 addpath([pwd '/algorithm']);
 addpath([pwd '/support']);
@@ -17,16 +48,16 @@ addpath(genpath([pwd])); %adds everything. Supersedes above adds
 import casadi.*
 warning('off','all')
 
-%Model Setup
+%Model Setu
 % Nb = 3;
 %Symbolics
 q_MX =  MX.sym('q_MX',[Nb 1]);
 qd_MX = MX.sym('qd_MX',[Nb 1]);
 x_MX = [q_MX ; qd_MX];   % State    
 
-u = MX.sym('u',[Nb-1 1]); %Last link not controlled
+u = MX.sym('u',[Nb 1]); %Last link not controlled
 
-u_size = Nb -1; x_size = length(x_MX);
+u_size = Nb; x_size = length(x_MX);
 params.u_size = u_size;
 params.x_size =x_size;
 
@@ -40,7 +71,7 @@ branching_factor = 1; %1=chain, 2=binary tree
 skewing = pi/exp(1);  %0->2D mechanism, anything else -> 3D mechanism
 % model = autoTree( Nb, branching_factor, skewing);
 n = Nb;
-model= robotModel(1/n,1/n,Nb,rbtNmber);
+% model= robotModel(1/n,1/n,Nb,rbtNmber);
 
 second_order =1;
 if iLQR
@@ -65,18 +96,22 @@ ABA_Deriv_Funcs = GetDerivativeFunctionsDirect(model,second_order);
 
 % N = 150;
 dt= 0.0025;
-% dt =0.03;
+% dt =0.02;
 
 params.N = N;
 params.dt = dt; %Incase I use it in other scripts 
 
-x0 = zeros(size(x_MX));
+load('x0Stored.mat','x0');
+% x0 = [1.5*rand(Nb,1);zeros(Nb,1)];
 % x0(1) = -pi/2 + 0.5*pi/2 ;% First link
-x0(rbtNmber) = -pi/2;
-x0 = x0 + x0_diff;
+% x0(rbtNmber) = pi/2;
+% x0 = x0 + rand(Nb,1);
 % % x0(rbtNmber) = pi/2 + x0_diff;
 % x0(rbtNmber+1) =pi/2 + x0_diff; 
 % x0 = x0';
+x0_a = [1.3374 1.8773 0.2956 0.2786 0.1374 0.0868 0.3690];
+x0 = [x0_a'; zeros(Nb,1)]; 
+
 
 q_desired= zeros(size(q_MX));
 qd_desired=zeros(size(qd_MX));
@@ -104,13 +139,8 @@ A2 =  ABA_Deriv_Funcs.qd(q_desired,qd_desired);
 A = [full(A1)';full(A2)']; 
 A = eye(x_size,x_size) + [qd_x;A']*dt;
 B = full(ABA_Deriv_Funcs.tau(q_desired))*dt;
-B = [zeros(length(u)+1,length(u)); B(:,1:length(u))]; 
+B = [zeros(length(u),length(u)); B(:,1:length(u))]; 
 
-contrMat = ctrb(A,B); 
-if ~(rank(A) == rank(contrMat))
-    warning('Pair not controllable');   
-    1==1;
-end
 
 [P,~,G] = dare(A,B,Q,R);
 % P(1,1)=P(1,1)*70;
@@ -139,7 +169,7 @@ params.N = N;
 
 params.beta = .5;
 params.gamma = .01;
-params.Debug = 1;
+params.Debug = 0;
 
 %PlaceHolder
 callback_params.plot_V_prediction = 0;
@@ -158,14 +188,20 @@ xbar(:,1) = x0; %Store states
 xi = x0;
 % xi = zeros(size(x0));xi(2)=pi/2*.70;
 
+Kp = 0.008;
 % Make initial Guess
 for i = 1:(params.N-1)
     
 %     ui = -G*(xi-x_desired);% + .05*rand(Nb-1,1);
 %     ui = 0;
 %     + noiselvl(1:length(u),i)*.75;
-     ui = -.0025*(xi(ceil(length(xi)/2)+1:end-1)); 
+%      ui = -.0025*(xi(ceil(length(xi)/2)+1:end)); 
 
+    %use the randomization purely
+%        ui = cntrl(:,i);
+
+       ui =  Kp *(xi(ceil(length(xi)/2)) - cntrl(:,i));
+%        ui = ui(1:end-1); %Too much 
 
     ubar(:,i) = ui;
     xi = CasadiDyn(params.F.qddABA,xi,ui,dt);
@@ -191,10 +227,16 @@ end
 
 fprintf('\nPaused at line 239\n') 
 %}
+plot(xbar(1,:))
 1==1;
+% xbar(1,1) = nan;
+if any(isnan(xbar(:)))
+    Out.Vstore = zeros(1,2); 
+    Out.Time = 0; Out.Iters = 0;
+    return    
+end
+ 1==1;
 
-
-%}
 
 %%
 [Vbar, xbar, ubar] = ForwardPass(xbar, ubar, du, K,1, params);
@@ -215,16 +257,15 @@ rho_store = [];FwdTrkcnter = [];BckTrkcnter=[];
 Tracker.BckSuccess = 0; Tracker.FwdSuccess = 0;
 Tracker.BckNonSuccess = 0; Tracker.FwdNonSuccess = 0;
 
-% xf_dev = []; 
 iterTimerTracker=[];
 while 1 == 1
-    iter= iter+1
+    iter= iter+1;
     iterStart = tic;
     params.iter =iter;
     
     % Backward Pass 
     if params.iLQR
-        [dV, Vx, Vxx, du, K] = BackwardPass_ABA(xbar, ubar, params);
+        [dV, Vx, Vxx, du, K] = BackwardPass(xbar, ubar, params);
         warning('Doing iLQR');
         BckTrkcnt=0;
     else % It is full second order DDP, so we must be careful
@@ -234,7 +275,7 @@ while 1 == 1
                 fprintf('\t reg=%.3e\n',regularization);
             end
             bckTime = tic;
-            [dV, Vx, Vxx, du, K, success] = BackwardPass_ABA(xbar, ubar, params,regularization);
+            [dV, Vx, Vxx, du, K, success] = BackwardPass(xbar, ubar, params,regularization);
             bckEndTime = toc(bckTime);
             if success == 0
                 regularization = max(regularization*4, 1e-3);
@@ -248,22 +289,20 @@ while 1 == 1
             regularization = 0;
         end
     end
-%     if iter ==5 
-%         1==1;
-% %         qdd_func =  ABA_Deriv_Funcs.qddABA;
-%         save('DDP_gains.mat','du','K','xbar','ubar','params')
-%         save('iLQR_gains.mat','du','K','xbar','ubar','params')
-%     end
+    if iter ==5 
+        1==1;
+        qdd_func =  ABA_Deriv_Funcs.qddABA;
+        save('DDP_gains.mat','du','K','xbar','ubar','qdd_func','params')
+        save('iLQR_gains.mat','du','K','xbar','ubar','qdd_func','params')
+    end
 %     
     Vprev = Vbar;
-    xprev =xbar; 
   
     %% Forward pass : Stepsize selection via backtracking line search
     [Vbar, xbar, ubar,rho,ThreeNumbers] = ForwardIteration(xbar, ubar, Vprev, du, K, dV , params);
     Tracker.FwdSuccess =  Tracker.FwdSuccess + ThreeNumbers.FwdSuc;  
     Tracker.FwdNonSuccess = Tracker.FwdNonSuccess + ThreeNumbers.FwdNonSuc;
     
-%     xf_dev(end+1) = norm(xbar(1:Nb*2,end)- xprev(1:Nb*2,end));
     Vstore(end+1) = Vbar;
     Change = Vprev - Vbar 
     rho_store(end+1)=rho;
@@ -285,16 +324,17 @@ while 1 == 1
       iterTimerTracker(end+1)=toc(iterStart);
 %     iter = iter+1;
     if Change < 1e-9
-        fprintf('CONVERGED: Change: %f',Change)
+%         fprintf('CONVERGED: Change: %f',Change)
         break
+    end
+    if iter > 700 
+       break 
     end
 end
 Out.Vstore = Vstore;
 Out.Time = toc(DDPstart);
 Out.iterTimerTracker = iterTimerTracker; 
 Out.Iters = iter;
-1==1;
-% Out.xf_dev = xf_dev;
 % fprintf('Total time for DDP w/ TrustRegion was: %f\n seconds',outTime)
 
 
@@ -485,4 +525,18 @@ else
 
         end
 end   
+end
+function robot = LBRrobotModel(I,X,mass,com,nbd) 
+    N_links = nbd; 
+    
+    robot.NB = N_links; 
+    robot.parent =[0:N_links-1];
+
+    robot.gravity = [0 0 -9.81]';
+
+   for idx =1:N_links
+        robot.jtype{idx} ='Rz'; 
+        robot.I{idx} = mcI(mass{idx},com{idx},I{idx});
+        robot.Xtree{idx} = X{idx};
+   end
 end

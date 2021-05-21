@@ -1,4 +1,4 @@
-function [dV, Vx, Vxx, du, K, success] = BackwardPass_ABA(xbar, ubar, params,regularization)
+function [dV, Vx, Vxx, du, K, success] = BackwardPass(xbar, ubar, params,regularization)
     
     success = 1;
     
@@ -9,9 +9,7 @@ function [dV, Vx, Vxx, du, K, success] = BackwardPass_ABA(xbar, ubar, params,reg
     du = zeros(params.u_size, params.N);
     
     K = zeros(params.u_size, params.x_size, params.N);
-    
-%     Quu_store =  zeros(params.u_size, params.u_size, params.N);
-    
+        
     % For CodeGen
     %K = zeros(1,2, params.N);
     
@@ -31,7 +29,7 @@ function [dV, Vx, Vxx, du, K, success] = BackwardPass_ABA(xbar, ubar, params,reg
         % If we are doing full second order DDP, add in regularization
         if params.iLQR == 0
 %             [Qx, Qu,Ham_fxx,Qxx, Quu, Qux,Fxx]=NewQinfO_DDP(xi,ui, Vxi, Vxxi,params.dt);
-            [Qx, Qu,Ham_fxx,Qxx, Quu, Qux,Fxx]= CasadiQinfoABA_ABA(xi,ui, Vxi, Vxxi,params);
+            [Qx, Qu,Ham_fxx,Qxx, Quu, Qux,Fxx]= CasadiQinfoABA(xi,ui, Vxi, Vxxi,params);
 
             Qxx = Qxx + eye(params.x_size)*regularization;
             
@@ -48,12 +46,8 @@ function [dV, Vx, Vxx, du, K, success] = BackwardPass_ABA(xbar, ubar, params,reg
             end
 %             Quu_store(:,:,i) = Quu;
         else
-            [Qx, Qu, Qxx, Quu, Qux] = CasadiQinfoILQR_ABA(xi, ui, Vxi, Vxxi,params);
-%             [~, p] = chol(Quu-eye(params.u_size)*1e-9);
-%             if p ~= 0
-%                 success = 0; %
-%                 break
-%             end
+            [Qx, Qu, Qxx, Quu, Qux] = CasadiQinfoILQR(xi, ui, Vxi, Vxxi,params);
+
             warning('Wrong loop.')
         end
         
