@@ -82,6 +82,27 @@ bar([Output(care,:);Output_iLQR(care,:)]');
 legend('DDP','iLQR');
 xlabel('Simulations'); ylabel('Number of Iterations'); 
 
+
+
+%pdf 
+figure;
+care =4;
+% figure;
+subplot(2,2,[1 2])
+bar([Output(care,:);Output_iLQR(care,:)]');
+legend('DDP','iLQR');
+xlabel('Simulations'); ylabel('Number of Iterations'); 
+
+
+care =1;
+% figure;
+subplot(2,2,[3 4])
+histogram(log10(Output(care,:)),'Normalization','pdf','DisplayName','DDP','BinWidth',0.2); hold on 
+histogram(log10(Output_iLQR(care,:)),'Normalization','pdf','DisplayName','iLQR','BinWidth',0.2);
+legend
+ylabel('PDF'); xlabel('Log Cost at Last Iteration'); 
+
+
 %% Save pdfs of current figure
 %{
 h = gcf; 
