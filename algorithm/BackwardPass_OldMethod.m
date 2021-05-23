@@ -1,4 +1,5 @@
 function [dV, Vx, Vxx, du, K, success] = BackwardPass_OldMethod(xbar, ubar, params,regularization)
+    global TensorBackTime TensorBackIters
     
     success = 1;
     
@@ -31,8 +32,12 @@ function [dV, Vx, Vxx, du, K, success] = BackwardPass_OldMethod(xbar, ubar, para
         % If we are doing full second order DDP, add in regularization
         if params.iLQR == 0
 %             [Qx, Qu,Ham_fxx,Qxx, Quu, Qux,Fxx]=NewQinfO_DDP(xi,ui, Vxi, Vxxi,params.dt);
+            tic
             [Qx, Qu,Ham_fxx,Qxx, Quu, Qux,Fxx]= CasadiQinfoUpdated_OldMethod(xi,ui, Vxi, Vxxi,params);
-
+            TensorBackTime = TensorBackTime + toc;
+            TensorBackIters = TensorBackIters + 1;
+            
+            
             Qxx = Qxx + eye(params.x_size)*regularization;
             
             % FOR CODEGEN

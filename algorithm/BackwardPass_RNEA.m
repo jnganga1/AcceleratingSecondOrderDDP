@@ -1,5 +1,5 @@
 function [dV, Vx, Vxx, du, K, success] = BackwardPass_RNEA(xbar, ubar, params,regularization)
-    
+    global RNEAbackTime RNEAbackIters
     success = 1;
     
     % Initialization
@@ -31,8 +31,11 @@ function [dV, Vx, Vxx, du, K, success] = BackwardPass_RNEA(xbar, ubar, params,re
         % If we are doing full second order DDP, add in regularization
         if params.iLQR == 0
 %             [Qx, Qu,Ham_fxx,Qxx, Quu, Qux,Fxx]=NewQinfO_DDP(xi,ui, Vxi, Vxxi,params.dt);
+            tic
             [Qx, Qu,Ham_fxx,Qxx, Quu, Qux,Fxx]= CasadiQinfo_RNEA(xi,ui, Vxi, Vxxi,params);
-            
+            RNEAbackTime = RNEAbackTime + toc;
+            RNEAbackIters = RNEAbackIters + 1;
+           
 %             [Quu,Qxx]=Regularizer(Quu,Qxx);
             
             

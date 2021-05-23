@@ -222,6 +222,8 @@ Tracker.BckNonSuccess = 0; Tracker.FwdNonSuccess = 0;
 
 iterTimerTracker=[];
 
+params
+
 while 1 == 1
     iter= iter+1
     
@@ -239,6 +241,7 @@ while 1 == 1
             end
             bckTime = tic;
             [dV, Vx, Vxx, du, K, success] = BackwardPass_RNEA(xbar, ubar, params,regularization);
+            %[dV, Vx, Vxx, du, K, success] = BackwardPass_OldMethod(xbar, ubar, params,regularization);
             bckEndTime = toc(bckTime);
             if success == 0
                 regularization = max(regularization*4, 1e-3);
@@ -247,7 +250,7 @@ while 1 == 1
             end
         end
         Tracker.BckSuccess = Tracker.BckSuccess + bckEndTime;
-        regularization = regularization / 20;
+        regularization = regularization / 4;
         if regularization < 1e-6
             regularization = 0;
         end
@@ -277,6 +280,9 @@ while 1 == 1
 %         end     
         
         break
+    end
+    if iter > 3 
+       break 
     end
     
     
