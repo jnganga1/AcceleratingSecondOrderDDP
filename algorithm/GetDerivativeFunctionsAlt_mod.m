@@ -66,6 +66,7 @@ function funcs = GetDerivativeFunctionsAlt_mod(model, second_order , direction)
     if second_order
         % More casdi symbolics
         mu = MX.sym('mu',Nb);
+        lambda = MX.sym('lambda',Nb);
         
         nu = MX.sym('nu',[Nb,Nb]);
         nu_q = MX.sym('nu_q',[Nb,Nb]);
@@ -91,6 +92,7 @@ function funcs = GetDerivativeFunctionsAlt_mod(model, second_order , direction)
         H_q_tau = (-jac_big_mod(2*Nb+1:end,:)');
        
         funcs.mod_second_all = Function('Mod_second_all',{q,qd,qdd,mu,nu_q,nu_qd,nu_tau},{H_qq_mod,H_qd_qd_mod,H_q_qd_mod,H_q_tau});
+        
         
         
         %
@@ -120,6 +122,26 @@ function funcs = GetDerivativeFunctionsAlt_mod(model, second_order , direction)
 
         funcs.all_second = Function('H_ID_all', {q,qd,qdd,mu,nu_q,nu_qd,nu_tau}, {H_q_q,H_qd_qd,H_q_qd,H_q_tau} );
         %}
+       
+        % All at once
+        
+        qdd = qddABA;
+        tau = ID_casadi(model,q,qd,qdd);
+        mu  = InvM_Mult(q,lambda);
+        ID_all_first = -InvM_Mult(q, Diff_ID_all(q,qd,qdd));
+        out = modID_casadi(model,q,qd,qdd,mu);
+        out_big = modID_casadi(model_no_gravity,q,0*qd,mu,ID_all_first);            
+        full_hessian_mod = hessian(out,[q;qd]);
+        jac_big_mod      = jacobian(out_big, q);
+        
+        A = - 1/2*full_hessian_mod(1:Nb,1:Nb) - jac_big_mod(1:Nb,:);
+        H_qq_mod = (A+A');
+        H_qd_qd_mod = (-full_hessian_mod(Nb+1:end, Nb+1:end));
+        H_q_qd_mod = (-full_hessian_mod(1:Nb, Nb+1:end) - jac_big_mod(Nb+1:2*Nb,:)');
+        H_q_tau = (-jac_big_mod(2*Nb+1:end,:)');
+       
+        ID_second_hess  = [H_qq_mod H_q_qd_mod; H_q_qd_mod' H_qd_qd_mod];
+        funcs.mod_all = Function('Mod_all',{q,qd,tauH},{ID_all_first,ID_second_hess  ,H_q_tau});
         
     end
 end

@@ -1,5 +1,5 @@
 
-Nb = 2; 
+Nb = 3; 
 
 %Select robot here - ensures all code runs the same thing
 rbtNmber = 1; %pendubot model

@@ -33,7 +33,7 @@ function [dV, Vx, Vxx, du, K, success] = BackwardPass_OldMethod(xbar, ubar, para
         if params.iLQR == 0
 %             [Qx, Qu,Ham_fxx,Qxx, Quu, Qux,Fxx]=NewQinfO_DDP(xi,ui, Vxi, Vxxi,params.dt);
             tic
-            [Qx, Qu,Ham_fxx,Qxx, Quu, Qux,Fxx]= CasadiQinfoUpdated_OldMethod(xi,ui, Vxi, Vxxi,params);
+            [Qx, Qu,Qxx, Quu, Qux]= CasadiQinfoUpdated_OldMethod(xi,ui, Vxi, Vxxi,params);
             TensorBackTime = TensorBackTime + toc;
             TensorBackIters = TensorBackIters + 1;
             
