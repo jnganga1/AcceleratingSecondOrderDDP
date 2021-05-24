@@ -13,7 +13,13 @@ sz = params.sz;
 sztau = sz; sztau(end)= sz(end)-1;
 dt=params.dt;
 
-M = params.F.all_first(q,qd,ui);
+%M = params.F.all_first(q,qd,ui);
+%[qq,q_qd,q_tau,qd_qd]=params.F.all_second(q,qd,ui); 
+% = params.F.all_first(q,qd,ui);
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+[M, qq,q_qd,q_tau,qd_qd]=params.F.all(q,qd,ui); 
 
 AJ =full(M(:,1:sz*2)'); %
 BJ = full(M(:,sz*2+1:end)*dt);
@@ -23,11 +29,6 @@ qd_x=[zeros([length(q) length(q)]) eye(length(q))];
 fx = eye(x_size,x_size) + [qd_x;AJ']*dt;
 
 fu = [zeros(length(ui)+1,length(ui)); BJ(:,1:length(ui))]; 
-
-lx = full(params.L.Lx(xi)); 
-lu = full(params.L.Lu(ui)); 
-
-[qq,q_qd,q_tau,qd_qd]=params.F.all_second(q,qd,ui); 
 
 M11 = reshape(full(qq),sz); 
 qqB = Tens3byVec(M11,lambda2','pre');
@@ -43,15 +44,19 @@ qqdB2 = Tens3byVec(M14,lambda2','pre');
 
 t3 =  [qqB qqdB ;qqdB2 qdqdB]*dt;
 
-lxx = full(params.L.Lxx(xi));
-Hxx = lxx +t3; 
-
 M15 = reshape(full(q_tau),sztau); %qtau= Tens3byVec(M15,lambda2','pre');
 hux = permute(M15,[2 3 1]); hux = cat(3,zeros(size(hux)),hux);
 a = permute(hux,[3 2 1]) .* dt; fuxP = cat(3,a,zeros(size(a)));
 
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+lx = full(params.L.Lx(xi)); 
+lu = full(params.L.Lu(ui));
+
 Hx = (lx + lambda'*fx)'; %Hx = lx + lambda'*fx 
 Hu = (lu + lambda'*fu)'; %Hu = lu + lambda'*fu
+
+lxx = full(params.L.Lxx(xi));
+Hxx = lxx +t3; 
 
 Hux = full(params.L.Lux(xi,ui)) + Tens3byVec(fuxP,lambda','pre');
 Huu = full(params.L.Luu(xi));

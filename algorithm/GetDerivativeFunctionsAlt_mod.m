@@ -91,10 +91,12 @@ function funcs = GetDerivativeFunctionsAlt_mod(model, second_order , direction)
         H_q_qd_mod = (-full_hessian_mod(1:Nb, Nb+1:end) - jac_big_mod(Nb+1:2*Nb,:)');
         H_q_tau = (-jac_big_mod(2*Nb+1:end,:)');
        
-        funcs.mod_second_all = Function('Mod_second_all',{q,qd,qdd,mu,nu_q,nu_qd,nu_tau},{H_qq_mod,H_qd_qd_mod,H_q_qd_mod,H_q_tau});
+        funcs.mod_second_all = Function('Mod_second_all',{q,qd,qdd,mu,nu_q,nu_qd,nu_tau},{H_qq_mod,H_qd_qd_mod,H_q_qd_mod,H_q_tau, full_hessian_mod, jac_big_mod,out_big});
         
-        
-        
+        FOP = [nu_q,nu_qd,nu_tau];
+        ID_second_hess = [H_qq_mod H_q_qd_mod ; H_q_qd_mod' H_qd_qd_mod];
+        second_tmp = Function('second_tmp',{q,qd,qdd,mu,FOP},{ID_second_hess,H_q_tau});        
+          
         %
         % Reverse mode AD to get gradient of mu' * tauID
         ID_q = jtimes(tauID,q,mu,true);
@@ -125,23 +127,12 @@ function funcs = GetDerivativeFunctionsAlt_mod(model, second_order , direction)
        
         % All at once
         
-        qdd = qddABA;
-        tau = ID_casadi(model,q,qd,qdd);
-        mu  = InvM_Mult(q,lambda);
-        ID_all_first = -InvM_Mult(q, Diff_ID_all(q,qd,qdd));
-        out = modID_casadi(model,q,qd,qdd,mu);
-        out_big = modID_casadi(model_no_gravity,q,0*qd,mu,ID_all_first);            
-        full_hessian_mod = hessian(out,[q;qd]);
-        jac_big_mod      = jacobian(out_big, q);
-        
-        A = - 1/2*full_hessian_mod(1:Nb,1:Nb) - jac_big_mod(1:Nb,:);
-        H_qq_mod = (A+A');
-        H_qd_qd_mod = (-full_hessian_mod(Nb+1:end, Nb+1:end));
-        H_q_qd_mod = (-full_hessian_mod(1:Nb, Nb+1:end) - jac_big_mod(Nb+1:2*Nb,:)');
-        H_q_tau = (-jac_big_mod(2*Nb+1:end,:)');
-       
-        ID_second_hess  = [H_qq_mod H_q_qd_mod; H_q_qd_mod' H_qd_qd_mod];
-        funcs.mod_all = Function('Mod_all',{q,qd,tauH},{ID_all_first,ID_second_hess  ,H_q_tau});
-        
+        tau    = MX.sym('tau',[model.NB 1]);
+        lambda = MX.sym('lambda',[model.NB 1]);
+        qdd    = FDab_casadi(model,q,qd,tau);
+        mu     = InvM_Mult(q,lambda);
+        ID_all_first = -InvM_Mult(q, Diff_ID_all(q,qd,qdd));        
+        [ID_second_hess,H_q_tau]= second_tmp(q,qd,qdd,mu,ID_all_first);
+        funcs.mod_all = Function('Mod_all',{q,qd,tau,lambda},{ID_all_first,ID_second_hess  ,H_q_tau});
     end
 end

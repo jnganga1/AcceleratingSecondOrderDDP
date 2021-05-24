@@ -44,6 +44,10 @@ function funcs = GetDerivativeFunctionsOld(model,second_order)
         funcs.qtau = Function('Hess_ABA_qqd',{q,tau},{By_qtau});
         funcs.qdqd = Function('Hess_ABA_q',{q,qd},{By_qdqd});
         funcs.all_second = Function('Hess_ABA_all',{q,qd,tau},{By_qq,By_qqd,By_qtau,By_qdqd});
+        
+        
+        funcs.all = Function('Diff_Hess_ABA_all',{q,qd,tau},{jacobian(qddABA, [q;qd;tau]), By_qq,By_qqd,By_qtau,By_qdqd }); % O(N^2) function
+        
         1==1;
     end 
 end
