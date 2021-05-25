@@ -288,6 +288,8 @@ while 1 == 1
         fprintf('CONVERGED: Change: %f',Change)
         break
     end
+
+    
 end
 Out.Vstore = Vstore;
 Out.Time = toc(DDPstart);

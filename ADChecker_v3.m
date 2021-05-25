@@ -236,6 +236,7 @@ for Nb = Nb_lst
 end
 
 %%
+save ADcheckerData.mat
 figure(1);
 clf
 %subplot(211)
