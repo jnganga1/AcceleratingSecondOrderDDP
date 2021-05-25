@@ -72,7 +72,7 @@ import casadi.*
         funcs.All_second = Function('All_second',{q,qd,tau,eta},{all_first, Second_Mat,H_q_tau});
         %Version 2
         Nb= model.NB;
-        H_qq = H_grouped_hess(1:Nb,1:Nb); H_q_qd= H_grouped_hess(Nb+1:2*Nb,1:Nb);
+        H_q_q = H_grouped_hess(1:Nb,1:Nb); H_q_qd= H_grouped_hess(Nb+1:2*Nb,1:Nb);
         H_qd_qd= H_grouped_hess(Nb+1:2*Nb,Nb+1:2*Nb);H_q_tau =H_grouped_hess(end-Nb+2:end,1:Nb)';
         Second_Mat_V2 = [H_q_q H_q_qd';H_q_qd H_qd_qd];     
         funcs.All_second_V2 = Function('All_second_V2',{q,qd,tau,eta},{all_first, Second_Mat_V2,H_q_tau});
