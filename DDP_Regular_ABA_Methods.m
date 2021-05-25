@@ -139,7 +139,7 @@ params.N = N;
 
 params.beta = .5;
 params.gamma = .01;
-params.Debug = 1;
+params.Debug = 0;
 
 %PlaceHolder
 callback_params.plot_V_prediction = 0;
@@ -243,7 +243,7 @@ while 1 == 1
             end
         end
         Tracker.BckSuccess = Tracker.BckSuccess + bckEndTime;
-        regularization = regularization / 20;
+        regularization = regularization / 4;
         if regularization < 1e-6
             regularization = 0;
         end

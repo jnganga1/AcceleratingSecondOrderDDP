@@ -10,7 +10,7 @@ x0_diff = 0.15;
 
 N = 400;
 % nbd = [2 3 4 5 7 9 12 16 22 26 30];
-nbd = [2 4 6 10 15 19 20 22]; % 25 30];
+nbd = [2 4 6 10 15 19 20]; % 25 30];
 % nbd=[20 25 30 35 40]%16 20];
 % nbd = 15;
 
@@ -27,8 +27,8 @@ for iNb = nbd
     timer = zeros(1,nmbRepts); iterI= timer;
     iterD = timer; timer_iLQR =timer;
     for iRepts=1:nmbRepts
-        Out= DDP_Regular_ABA_Methods(5,2,0,N,rbtNmber,x0_diff); %DDP
-        OutiLQR= DDP_Regular_ABA_Methods(2,2,1,N,rbtNmber,x0_diff);%iLQR
+        Out= DDP_Regular_ABA_Methods(iNb,2,0,N,rbtNmber,x0_diff); %DDP
+        OutiLQR= DDP_Regular_ABA_Methods(iNb,2,1,N,rbtNmber,x0_diff);%iLQR
         timer(iRepts)= Out.Time;
         timer_iLQR(iRepts)= OutiLQR.Time;
         iterI(iRepts) = OutiLQR.Iters;
@@ -51,7 +51,8 @@ Iters_RNEA =[]; Iters_RNEA_iLQR =[];
 TimerRNEA_Carp=[]; ItersRNEA_Carp=[];
 %RNEA
 
-carp=0; %modified
+modRnea=1;%modified RNEA
+notModRnea=0;
 %RNEA :: DDP_RegularRNEA(Nb,iLQR,N,modRNEA,rbtNmber,x0_diff)
 for iNb = nbd
     fprintf('\RNEA, Number of body %i \n',iNb)
@@ -59,9 +60,9 @@ for iNb = nbd
     timer_iLQR =timer; iterI = timer;
     timerCarp = timer; iterCarp = timer; 
     for iRepts=1:nmbRepts
-        Out= DDP_RegularRNEA(iNb,0,N,carp,rbtNmber,x0_diff);%relations of modRNEA
-        OutCarp = DDP_RegularRNEA(iNb,0,N,1,rbtNmber,x0_diff); %$Casadi does derivs of modRNEA
-        OutiLQR = DDP_RegularRNEA(iNb,1,N,carp,rbtNmber,x0_diff);
+        Out= DDP_RegularRNEA(iNb,0,N,modRnea,rbtNmber,x0_diff);%relations of modRNEA
+        OutCarp = DDP_RegularRNEA(iNb,0,N,notModRnea,rbtNmber,x0_diff); %$Casadi does derivs of modRNEA
+        OutiLQR = DDP_RegularRNEA(iNb,1,N,modRnea,rbtNmber,x0_diff); %same for both mod/notmod Rnea
         timer(iRepts)= Out.Time;
         timerCarp(iRepts)=OutCarp.Time;
         timer_iLQR(iRepts)= OutiLQR.Time;

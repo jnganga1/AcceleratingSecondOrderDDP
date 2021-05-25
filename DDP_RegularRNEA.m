@@ -137,7 +137,7 @@ params.N = N;
 
 params.beta = .5;
 params.gamma = .01;
-params.Debug = 1;
+params.Debug = 0;
 
 %PlaceHolder
 callback_params.plot_V_prediction = 0;
@@ -222,7 +222,7 @@ Tracker.BckNonSuccess = 0; Tracker.FwdNonSuccess = 0;
 
 iterTimerTracker=[];
 
-params
+
 
 while 1 == 1
     iter= iter+1
@@ -281,9 +281,8 @@ while 1 == 1
         
         break
     end
-    if iter > 3 
-       break 
-    end
+    
+
     
     
 end

@@ -1,5 +1,5 @@
 function [dV, Vx, Vxx, du, K, success] = BackwardPass_RNEA(xbar, ubar, params,regularization)
-    global RNEAbackTime RNEAbackIters
+    %global RNEAbackTime RNEAbackIters
     success = 1;
     
     % Initialization
@@ -33,8 +33,8 @@ function [dV, Vx, Vxx, du, K, success] = BackwardPass_RNEA(xbar, ubar, params,re
 %             [Qx, Qu,Ham_fxx,Qxx, Quu, Qux,Fxx]=NewQinfO_DDP(xi,ui, Vxi, Vxxi,params.dt);
             tic
             [Qx, Qu,Qxx, Quu, Qux]= CasadiQinfo_RNEA(xi,ui, Vxi, Vxxi,params);
-            RNEAbackTime = RNEAbackTime + toc;
-            RNEAbackIters = RNEAbackIters + 1;
+            %RNEAbackTime = RNEAbackTime + toc;
+            %RNEAbackIters = RNEAbackIters + 1;
            
 %             [Quu,Qxx]=Regularizer(Quu,Qxx);
             

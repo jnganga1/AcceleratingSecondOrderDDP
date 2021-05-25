@@ -46,7 +46,12 @@ dt=params.dt;
 % q_tau_org = q_tau;
 
 %%
-[M, t3, q_tau] =  params.F.mod_all(q,qd,ui , lambda2);
+if params.modRNEA
+    %use modRNEA
+    [M, t3, q_tau] =  params.F.mod_all(q,qd,ui , lambda2);
+else
+    [M, t3, q_tau] =  params.F.All_second(q,qd,ui , lambda2);
+end
 
 M = full(M);
 t3 = full(t3)*dt;

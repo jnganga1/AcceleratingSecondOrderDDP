@@ -1,5 +1,5 @@
 function [dV, Vx, Vxx, du, K, success] = BackwardPass_OldMethod(xbar, ubar, params,regularization)
-    global TensorBackTime TensorBackIters
+    %global TensorBackTime TensorBackIters
     
     success = 1;
     
@@ -34,8 +34,8 @@ function [dV, Vx, Vxx, du, K, success] = BackwardPass_OldMethod(xbar, ubar, para
 %             [Qx, Qu,Ham_fxx,Qxx, Quu, Qux,Fxx]=NewQinfO_DDP(xi,ui, Vxi, Vxxi,params.dt);
             tic
             [Qx, Qu,Qxx, Quu, Qux]= CasadiQinfoUpdated_OldMethod(xi,ui, Vxi, Vxxi,params);
-            TensorBackTime = TensorBackTime + toc;
-            TensorBackIters = TensorBackIters + 1;
+            %TensorBackTime = TensorBackTime + toc;
+            %TensorBackIters = TensorBackIters + 1;
             
             
             Qxx = Qxx + eye(params.x_size)*regularization;

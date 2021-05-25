@@ -18,11 +18,14 @@ lambda = Vxi;
 
 
 %you're here - you're tracking if all_first is first than individual ones
-a1 =params.F.qddABA(q,qd,ui_un);
-M =params.F.all_first(q,qd,a1);
-AJ = full(M(:,1:sz*2)'); 
-BJ = full(M(:,sz*2+1:end)*dt);
+% a1 =params.F.qddABA(q,qd,ui_un);
+% M =params.F.all_first(q,qd,a1);
+% AJ = full(M(:,1:sz*2)'); 
+% BJ = full(M(:,sz*2+1:end)*dt);
 
+Here = params.F.All_first(q,qd,ui_un);
+AJ = full(Here(:,1:sz*2)'); 
+BJ = full(Here(:,sz*2+1:end)*dt);
 
 
 qd_x=[zeros([length(q) length(q)]) eye(length(q))];

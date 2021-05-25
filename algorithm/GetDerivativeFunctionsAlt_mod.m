@@ -61,7 +61,15 @@ function funcs = GetDerivativeFunctionsAlt_mod(model, second_order , direction)
     
     % Group all first order partials together to see if Casadi can do it faster in this case
     funcs.all_first   = Function('Diff_FD_all',{q,qd,qdd},{-InvM_Mult(q, Diff_ID_all(q,qd,qdd))});
-
+    
+    %Doing this lets function call to all_first to be function of q,qd,tau
+    %instead of q,qd,qdd
+    qddABA    = FDab_casadi(model,q,qd,tau);
+    ID_all_first = -InvM_Mult(q, Diff_ID_all(q,qd,qddABA));        
+    funcs.All_first = Function('All_first',{q,qd,tau},{ID_all_first});
+    
+    
+    
     Nb = model.NB;
     if second_order
         % More casdi symbolics
@@ -89,13 +97,13 @@ function funcs = GetDerivativeFunctionsAlt_mod(model, second_order , direction)
         H_qq_mod = (A+A');
         H_qd_qd_mod = (-full_hessian_mod(Nb+1:end, Nb+1:end));
         H_q_qd_mod = (-full_hessian_mod(1:Nb, Nb+1:end) - jac_big_mod(Nb+1:2*Nb,:)');
-        H_q_tau = (-jac_big_mod(2*Nb+1:end,:)');
+        H_q_tau_mod = (-jac_big_mod(2*Nb+1:end,:)');
        
-        funcs.mod_second_all = Function('Mod_second_all',{q,qd,qdd,mu,nu_q,nu_qd,nu_tau},{H_qq_mod,H_qd_qd_mod,H_q_qd_mod,H_q_tau, full_hessian_mod, jac_big_mod,out_big});
+        funcs.mod_second_all = Function('Mod_second_all',{q,qd,qdd,mu,nu_q,nu_qd,nu_tau},{H_qq_mod,H_qd_qd_mod,H_q_qd_mod,H_q_tau_mod, full_hessian_mod, jac_big_mod,out_big});
         
         FOP = [nu_q,nu_qd,nu_tau];
         ID_second_hess = [H_qq_mod H_q_qd_mod ; H_q_qd_mod' H_qd_qd_mod];
-        second_tmp = Function('second_tmp',{q,qd,qdd,mu,FOP},{ID_second_hess,H_q_tau});        
+        second_tmp = Function('second_tmp',{q,qd,qdd,mu,FOP},{ID_second_hess,H_q_tau_mod});        
           
         %
         % Reverse mode AD to get gradient of mu' * tauID
@@ -109,6 +117,11 @@ function funcs = GetDerivativeFunctionsAlt_mod(model, second_order , direction)
         H_qd_qd = -jaco(ID_qd, qd);
         H_q_qd  = -jaco(ID_q,qd) - jtimes(M_mult(q,mu) , q, nu_qd,true);
         H_q_tau = -jtimes(M_mult(q,mu),q, nu_tau, true);
+        
+        %All at once via RNEA 
+        Second_mat = [H_q_q H_q_qd; H_q_qd' H_qd_qd];
+        second_mat_fn = Function('second_mat_fn',{q,qd,qdd,mu,FOP},{Second_mat,H_q_tau}); 
+        
         
         % Note: I don't currently have a "common" way to compute all these
         % partials together at the same time. That could help speed it up
@@ -125,14 +138,17 @@ function funcs = GetDerivativeFunctionsAlt_mod(model, second_order , direction)
         funcs.all_second = Function('H_ID_all', {q,qd,qdd,mu,nu_q,nu_qd,nu_tau}, {H_q_q,H_qd_qd,H_q_qd,H_q_tau} );
         %}
        
-        % All at once
-        
+        % All at once  via modRNEA        
         tau    = MX.sym('tau',[model.NB 1]);
         lambda = MX.sym('lambda',[model.NB 1]);
         qdd    = FDab_casadi(model,q,qd,tau);
         mu     = InvM_Mult(q,lambda);
         ID_all_first = -InvM_Mult(q, Diff_ID_all(q,qd,qdd));        
-        [ID_second_hess,H_q_tau]= second_tmp(q,qd,qdd,mu,ID_all_first);
-        funcs.mod_all = Function('Mod_all',{q,qd,tau,lambda},{ID_all_first,ID_second_hess  ,H_q_tau});
+        [ID_second_hess,H_q_tau_mod]= second_tmp(q,qd,qdd,mu,ID_all_first);
+        funcs.mod_all = Function('Mod_all',{q,qd,tau,lambda},{ID_all_first,ID_second_hess  ,H_q_tau_mod});
+        
+        [Out_second_mat,out_q_tau] = second_mat_fn(q,qd,qdd,mu,ID_all_first);
+        funcs.All_second = Function('All_second',{q,qd,tau,lambda},{ID_all_first,Out_second_mat,out_q_tau});
+        
     end
 end

@@ -32,7 +32,8 @@ import casadi.*
     funcs.q = Function('Diff_ABA_q', {q,qd,tau}, {jaco(qddABA, q)} ); % O(N^2) function
     funcs.qd = Function('Diff_ABA_qd',{q,qd}, {jaco(qddABA, qd)} ); % O(N^2) function
     funcs.tau = Function('Diff_ABA_tau',{q}, {jaco(qddABA, tau)} ); % O(N^2) function
-    funcs.all_first = Function('Diff_ABA_all',{q,qd,tau},{jaco(qddABA, [q;qd;tau])}); % O(N^2) function
+    all_first = jaco(qddABA, [q;qd;tau]);
+    funcs.all_first = Function('Diff_ABA_all',{q,qd,tau},{all_first}); % O(N^2) function
 
     
    
@@ -64,6 +65,19 @@ import casadi.*
         % outputs some first-order partials that we don't really need)
         funcs.all_second = Function('H_ABA_all', {q,qd,tau,eta}, {H_q_q,H_qd_qd,H_q_qd',H_q_tau} );
         funcs.all_second_v2 = Function('H_ABA_all_v2',{q,qd,tau,eta},{H_grouped_hess});
+        
+        %Doing this so you only have one function call
+        %Version 1
+        Second_Mat = [H_q_q H_q_qd;H_q_qd' H_qd_qd];     
+        funcs.All_second = Function('All_second',{q,qd,tau,eta},{all_first, Second_Mat,H_q_tau});
+        %Version 2
+        Nb= model.NB;
+        H_qq = H_grouped_hess(1:Nb,1:Nb); H_q_qd= H_grouped_hess(Nb+1:2*Nb,1:Nb);
+        H_qd_qd= H_grouped_hess(Nb+1:2*Nb,Nb+1:2*Nb);H_q_tau =H_grouped_hess(end-Nb+2:end,1:Nb)';
+        Second_Mat_V2 = [H_q_q H_q_qd';H_q_qd H_qd_qd];     
+        funcs.All_second_V2 = Function('All_second_V2',{q,qd,tau,eta},{all_first, Second_Mat_V2,H_q_tau});
+
+        
     end
 return 
 end
