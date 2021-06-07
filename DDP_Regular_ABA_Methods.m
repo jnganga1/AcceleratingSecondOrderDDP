@@ -6,7 +6,7 @@ function Out = DDP_Regular_ABA_Methods(Nb,ver,iLQR,N,rbtNmber,x0_diff) %'end' is
 
 
 
-%
+%{
 
 addpath([pwd '/algorithm']);
 addpath([pwd '/support']);
@@ -41,11 +41,13 @@ skewing = pi/exp(1);  %0->2D mechanism, anything else -> 3D mechanism
 % model = autoTree( Nb, branching_factor, skewing);
 n = Nb;
 model= robotModel(1/n,1/n,Nb,rbtNmber);
-
+%}
+import casadi.*
 second_order =1;
 if iLQR
     second_order = 0;
 end
+setup
 fprintf('\tComputing Direct Functions\n');
 ABA_Deriv_Funcs = GetDerivativeFunctionsDirect(model,second_order);
 % fprintf('\tComputing Alt Functions\n');
@@ -58,6 +60,8 @@ ABA_Deriv_Funcs = GetDerivativeFunctionsDirect(model,second_order);
 %fnVar:: 3 = funcsOld
 %fnVar:: 4 = mod_RNEA
 
+
+%{
 %Problem Setup 
 % N=1200;%Horizon
 % dt = 0.03; %state Initialization
@@ -94,7 +98,7 @@ x_desired= [q_desired;qd_desired];
 l_cont = (x_MX- x_desired)'*Q*(x_MX-x_desired) +  (u)'*R*(u);
 l = l_cont*dt;
 vars = [x_MX; u];
-
+%}
 
 %Lqr Mats
 x_size = length(x_desired);
@@ -116,13 +120,13 @@ end
 % P(1,1)=P(1,1)*70;
 LF   = 1/2*(x_MX-x_desired)'*P*(x_MX-x_desired);  
 
-
-Lfunc.L = Function('L', {x_MX,u}, {l} ); 
-Lfunc.Lx = Function('Lx', {x_MX}, {jacobian(l,x_MX)});
-Lfunc.Lu = Function('Lu', {u}, {jacobian(l,u)}); 
-Lfunc.Lxx = Function('Lxx', {x_MX}, { hessian(l,x_MX)});
-Lfunc.Lux = Function('Lux', {x_MX,u}, { jacobian(jacobian(l,u),x_MX) });
-Lfunc.Luu =Function('Luu', {x_MX}, { hessian(l,u)});
+% 
+% Lfunc.L = Function('L', {x_MX,u}, {l} ); 
+% Lfunc.Lx = Function('Lx', {x_MX}, {jacobian(l,x_MX)});
+% Lfunc.Lu = Function('Lu', {u}, {jacobian(l,u)}); 
+% Lfunc.Lxx = Function('Lxx', {x_MX}, { hessian(l,x_MX)});
+% Lfunc.Lux = Function('Lux', {x_MX,u}, { jacobian(jacobian(l,u),x_MX) });
+% Lfunc.Luu =Function('Luu', {x_MX}, { hessian(l,u)});
 Lfunc.LF = Function('LF', {x_MX},{LF});
 Lfunc.LFderivs = Function('LFderivs', {x_MX},{jacobian(LF,x_MX),hessian(LF,x_MX)});
 
@@ -288,6 +292,9 @@ while 1 == 1
         fprintf('CONVERGED: Change: %f',Change)
         break
     end
+%     if iter > 5
+%         break 
+%     end
 
     
 end
@@ -398,93 +405,4 @@ legend('location','best')
 title('Relative Time Spent')
 
 %}
-end
-
-
-%{
-fprintf('Final V: %.3f',Vbar) 
-fprintf('Iters: %i',iter)
-
-
-p = ['RegularDDP_data.txt'];
-fileID = fopen(p,'a');
-mm = ['Link',num2str(Number_Links)];
-here = [mm,'::, Total Time: %f,',...
-    ' Total Iters: %i, Time per Iter: %f, Final V Value: %f\n'];
-hereVals = [outTime,iter,outTime/iter,Vbar];
-fprintf(fileID,here,hereVals);
-    
-fclose(fileID);
-
-FolderName= [searchPath,'/figures/'];
-mkdir(FolderName);
-save([FolderName,'rhoratio.mat'], 'rho_store')
-save([FolderName,'RejectedIter.mat'],'BckTrkcnter','FwdTrkcnter')
-save([FolderName,'TrackerInfo.mat'],'Tracker')
-FigList = findobj(allchild(0), 'flat', 'Type', 'figure');
-for iFig = 1:length(FigList)
-  FigHandle = FigList(iFig);
-  FigName = ['figure',num2str(iFig)];
-  savefig(FigHandle, [FolderName, FigName, '.fig']);
-end
-
-% end
-%}
-
-function robot = robotModel(mass_pole,length_pole,N_links,whichRobot) 
-%1 == acrobot 
-%2 == Cartpole 
-
-
-if whichRobot == 1 
-    %N-linked Acrobot 
-    robot.NB = N_links; 
-    robot.parent =[0:N_links-1];
-
-    robot.gravity = [0 -9.81]';
-
-   for idx =1:N_links
-        robot.jtype{idx} ='r'; 
-        robot.I{idx} = mcI(mass_pole,[length_pole 0],0); 
-    %        robot.I{idx} = mcI(mass_pole,[length_pole/2 0],1/12*mass_pole*length_pole^2); 
-        if idx == 1  
-           robot.Xtree{idx} = eye(3); %1
-    %            robot.Xtree{idx} = plnr(deg2rad(-180),[0 0]); %2
-        else
-           robot.Xtree{idx} = plnr(0,[length_pole 0]);
-        end      
-   end
-else
-    %N-linked Cartpole
-        
-%         NB = N_links+1;
-        robot.NB = N_links;
-        robot.parent = [0:N_links-1];
-        robot.gravity = [0 -9.81]';
-
-%         NB = N_links+1;
-%         robot.NB = NB;
-%         robot.parent = [0:N_links];
-%         robot.gravity = [0 -9.81]';
-
-
-        robot.jtype{1} = 'px'; % The first joint is a prismatic in the +X0 direction
-        robot.jtype{2} = 'r';
-
-        robot.Xtree{1} = eye(3); % The transform from {0} to just before joint 1 is identity
-        robot.Xtree{2} = eye(3);
-
-        mass_cart = 1;
-        robot.I{1} = mcI( mass_cart, [0 0], 0 );
-        robot.I{2} = mcI( mass_pole, [length_pole 0], 0 );    
-
-        for i=3:N_links
-            robot.jtype{i} = 'r'; %Revolute in +z1; 
-            
-            robot.Xtree{i} = plnr(0,[length_pole 0]); 
-    %           robot.Xtree{i+1} = xlt([length_pole 0 0]);
-            robot.I{i}= mcI( mass_pole, [length_pole 0], 0 );
-
-        end
-end   
 end

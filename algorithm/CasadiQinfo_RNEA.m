@@ -54,7 +54,7 @@ else
 end
 
 M = full(M);
-t3 = full(t3)*dt;
+t3 = full(t3*dt);
 
 q_val   = M(:,1:sz); 
 qd_val  = M(:,sz+1:sz*2);

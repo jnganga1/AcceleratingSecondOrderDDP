@@ -44,6 +44,7 @@ for iNb = nbd
     Iters_ABA_iLQR(end+1) = mean(iterI);
 end
 %}
+%%
 1==1;
 
 Timer_RNEA =[]; Timer_RNEA_iLQR=[];
@@ -75,8 +76,8 @@ for iNb = nbd
     VstoreRNEACarp  = OutCarp.Vstore;
     VstoreRNEA_iLQR = OutiLQR.Vstore;
     
-    Timer_RNEA(:,end+1) = mean(timer);
-    TimerRNEA_Carp(:,end+1)= mean(timerCarp);%modRNEA
+    Timer_RNEA(:,end+1) = mean(timer);%modRNEA
+    TimerRNEA_Carp(:,end+1)= mean(timerCarp);
     Timer_RNEA_iLQR(:,end+1) = mean(timer_iLQR);
     
     Iters_RNEA(:,end+1) = mean(iterD);
@@ -84,7 +85,7 @@ for iNb = nbd
     ItersRNEA_Carp(end+1)= mean(iterCarp);
 end
 
-
+%%
 Old_Time = []; Old_Iters =[];
 Old_Time_iLQR=[];Old_Iters_iLQR =[];
 %
@@ -95,14 +96,14 @@ for iNb =nbd
     timer_iLQR = timer; iterI= iterD; 
     for iRepts=1:nmbRepts
         Out= DDP_Regular_OldMethod(iNb,0,N,rbtNmber,x0_diff); %DDP
-        OutiLQR =DDP_Regular_OldMethod(iNb,1,N,rbtNmber,x0_diff);  %iLQR
+%         OutiLQR =DDP_Regular_OldMethod(iNb,1,N,rbtNmber,x0_diff);  %iLQR
         timer(iRepts)= Out.Time;
-        timer_iLQR(iRepts)= OutiLQR.Time;
+%         timer_iLQR(iRepts)= OutiLQR.Time;
         iterD(iRepts)= Out.Iters; 
-        iterI(iRepts)= OutiLQR.Iters;
+%         iterI(iRepts)= OutiLQR.Iters;
     end
     VstoreOld_DDP = Out.Vstore; 
-    VstoreOld_iLQR = OutiLQR.Vstore;
+%     VstoreOld_iLQR = OutiLQR.Vstore;
     
     Old_Time(end+1) = mean(timer);
     Old_Time_iLQR(end+1) = mean(timer_iLQR);
@@ -111,9 +112,9 @@ for iNb =nbd
     Old_Iters_iLQR(end+1) = mean(iterI);
 end
 %}
-
+%%
 1==1;
-%% Some plots
+% Some plots
 
 nbd = [2 4 6 10 15 19 20];
 figure;
@@ -146,14 +147,14 @@ end
 figure; 
 %DDP
 hold on
-A0=loglog(nbd,Timer_ABA(1:end-1),'b-o'); hold on
-A1=loglog(nbd,Timer_RNEA(1:end-1),'k-o');
-A1_2=loglog(nbd,TimerRNEA_Carp(1:end-1),'m-o');
+A0=loglog(nbd,Timer_ABA,'b-o'); hold on
+A1=loglog(nbd,Timer_RNEA,'k-o'); %Mod RNEA
+A1_2=loglog(nbd,TimerRNEA_Carp,'m-o');%Not Mod RNEA
 A2=loglog(nbd,Old_Time,'r-o');
 %iLQR
-A3=loglog(nbd,Timer_ABA_iLQR(1:end-1),'b-.s');
-A4=loglog(nbd,Timer_RNEA_iLQR(1:end-1),'k-.s');
-A5=loglog(nbd,Old_Time_iLQR,'r-.s');
+A3=loglog(nbd,Timer_ABA_iLQR,'b-.s');
+A4=loglog(nbd,Timer_RNEA_iLQR,'k-.s');
+% A5=loglog(nbd,Old_Time_iLQR,'r-.s');
 
 if rbtNmber==1
     title('Acrobot: DDP Evaluation Time')
@@ -170,7 +171,7 @@ A2.DisplayName = 'DDP via Tensor Contraction'; A2.LineWidth=2.5;A2.Color='r';
 %iLQR
 A3.DisplayName = 'iLQR via ABA'; A3.LineWidth=2.5;%A3.Color=[.4660 .6740 .1880];
 A4.DisplayName = 'iLQR via RNEA'; A4.LineWidth=2.5;
-A5.DisplayName = 'iLQR via Old Method (ABA)'; A5.LineWidth=2.5;
+% A5.DisplayName = 'iLQR via Old Method (ABA)'; A5.LineWidth=2.5;
 
 lgd = legend; lgd.FontSize=20; legend; 
 xlabel('Dofs'); ylabel('Time (s)');
@@ -180,11 +181,11 @@ xlim([nbd(1) nbd(end)]);
 xticks(nbd);
 grid on
 set(gca,'Yscale','linear')
-
+%%
 
 figure; 
-bp=boxplot([Timer_RNEA(1:end-1)',Timer_ABA(1:end-1)',TimerRNEA_Carp(1:end-1)',Old_Time',...
-    Timer_ABA_iLQR(1:end-1)',Timer_RNEA_iLQR(1:end-1)'],'labels',{A0.DisplayName,...
+bp=boxplot([Timer_RNEA',Timer_ABA',TimerRNEA_Carp',Old_Time',...
+    Timer_ABA_iLQR',Timer_RNEA_iLQR'],'labels',{A0.DisplayName,...
     A1.DisplayName,A1_2.DisplayName, A2.DisplayName,...
     A3.DisplayName,A4.DisplayName} );
 xtickangle(20)
@@ -197,8 +198,8 @@ ylabel('Time')
 
 
 figure; 
-bp=boxplot([Iters_RNEA(1:end-1)',Iters_ABA(1:end-1)',ItersRNEA_Carp(1:end-1)',Old_Iters',...
-    Iters_ABA_iLQR(1:end-1)',Iters_RNEA_iLQR(1:end-1)'],'labels',{A0.DisplayName,...
+bp=boxplot([Iters_RNEA',Iters_ABA',ItersRNEA_Carp',Old_Iters',...
+    Iters_ABA_iLQR',Iters_RNEA_iLQR'],'labels',{A0.DisplayName,...
     A1.DisplayName,A1_2.DisplayName, A2.DisplayName,...
     A3.DisplayName,A4.DisplayName} );
 xtickangle(20)
@@ -212,4 +213,12 @@ ylabel('Iters')
 
 
 %%
+h=gcf;
+set(h,'Units','Inches');
+pos = get(h,'Position');
+set(h,'PaperPositionMode','Auto','PaperUnits','Inches','PaperSize',[pos(3), pos(4)])
+print(h,'LastRun_N7BoxPlotTime','-dpdf','-r0')
+
+%%
+f
 

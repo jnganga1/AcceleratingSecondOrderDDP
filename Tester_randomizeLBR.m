@@ -60,6 +60,7 @@ set(groot, 'defaultAxesTickLabelInterpreter','latex');
 set(groot, 'defaultLegendInterpreter','latex');
 set(groot, 'DefaultAxesFontSize', 18);
 
+save lbr_randomization.mat
 care = 2;
 figure; %subplot(2,2,1)
 bar([Output(care,:);Output_iLQR(care,:)]');
@@ -109,7 +110,7 @@ h = gcf;
 set(h,'Units','Inches');
 pos = get(h,'Position');
 set(h,'PaperPositionMode','Auto','PaperUnits','Inches','PaperSize',[pos(3), pos(4)])
-print(h,'Random_40control','-dpdf','-r0')
+print(h,'Sim_lbr','-dpdf','-r0')
 %}
 
 %%

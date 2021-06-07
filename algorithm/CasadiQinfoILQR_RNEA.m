@@ -23,7 +23,7 @@ lambda = Vxi;
 % AJ = full(M(:,1:sz*2)'); 
 % BJ = full(M(:,sz*2+1:end)*dt);
 
-Here = params.F.All_first(q,qd,ui_un);
+Here = params.F.All_first(q,qd,ui);
 AJ = full(Here(:,1:sz*2)'); 
 BJ = full(Here(:,sz*2+1:end)*dt);
 

@@ -37,6 +37,7 @@ RNEA_store =zeros(2,numRepts);RNEA_iLQR_store=RNEA_store;
 modRNEA_store=zeros(2,numRepts);
 Old_store = zeros(2,numRepts);
 
+modRnea=1; notModRnea = 0; 
 for idx =1:numRepts
     x0_diff = (b-a).*rand(nbd*2,1) + a; %x0_diff=x0_diff;
     fprintf('\nInitial x0 = [pi/2 + %.3f;0;0...]\n',x0_diff);
@@ -45,20 +46,20 @@ for idx =1:numRepts
 %     x0_diff = [pi/2*ones(1,7) zeros(1,7)]; x0_diff(1) = x0_diff(1) +pi/2;
     
     1==1;
-    ABA= DDP_Regular_ABA_Methods(nbd,1,0,N,rbtNmber,x0_diff);
+    ABA= DDP_Regular_ABA_Methods(nbd,2,0,N,rbtNmber,x0_diff);%using ver2 as it's faster
     ABA_store(:,idx) = [ABA.Time;ABA.Iters];
     
-    ABAiLQR= DDP_Regular_ABA_Methods(nbd,1,1,N,rbtNmber,x0_diff);
+    ABAiLQR= DDP_Regular_ABA_Methods(nbd,2,1,N,rbtNmber,x0_diff);
     ABA_iLQR_store(:,idx) = [ABAiLQR.Time; ABAiLQR.Iters];
 
     
-    RNEA= DDP_RegularRNEA(nbd,0,N,1,rbtNmber,x0_diff);
+    RNEA= DDP_RegularRNEA(nbd,0,N,notModRnea,rbtNmber,x0_diff);
     RNEA_store(:,idx)=[RNEA.Time; RNEA.Iters];
     
-    modRNEA= DDP_RegularRNEA(nbd,0,N,0,rbtNmber,x0_diff);
+    modRNEA= DDP_RegularRNEA(nbd,0,N,modRnea,rbtNmber,x0_diff);
     modRNEA_store(:,idx)=[modRNEA.Time; modRNEA.Iters];
 
-    RNEAiLQR = DDP_RegularRNEA(nbd,1,N,0,rbtNmber,x0_diff);
+    RNEAiLQR = DDP_RegularRNEA(nbd,1,N,modRnea,rbtNmber,x0_diff);
     RNEA_iLQR_store(:,idx) = [RNEAiLQR.Time; RNEAiLQR.Iters];
     
 
@@ -67,8 +68,8 @@ for idx =1:numRepts
  
 end
 
-save('VaryInitConditions')
-
+save VaryInitConditions_v2.mat
+%%
 labels_iLQR ={'iLQR via ABA', 'iLQR via RNEA'};
 labels_DDP ={'DDP via ABA', 'DDP via RNEA', 'DDP via Modified RNEA',...
     'DDP via Tensor Contraction'};
@@ -76,8 +77,9 @@ labels = [labels_iLQR labels_DDP];
 
 figure;
 row = 1;%Time
-Tme = boxplot([RNEA_iLQR_store(row,:)',ABA_iLQR_store(row,:)',...
-    ABA_store(row,:)',RNEA_store(row,:)',modRNEA_store(row,:)',Old_store(row,:)'],...
+Timed = [RNEA_iLQR_store(row,:)',ABA_iLQR_store(row,:)',...
+    ABA_store(row,:)',RNEA_store(row,:)',modRNEA_store(row,:)',Old_store(row,:)'];
+Tme = boxplot(Timed,...
     'labels', labels); 
 
 xtickangle(20);
@@ -89,15 +91,18 @@ L.XAxis.TickLabelInterpreter = 'latex';
 ylabel('Logarithm of Time(s)','Interpreter','latex')
 
 
+
 figure; 
 row =2;%Iters
-Itr = boxplot([RNEA_iLQR_store(row,:)',ABA_iLQR_store(row,:)',...
-    ABA_store(row,:)',RNEA_store(row,:)',modRNEA_store(row,:)',Old_store(row,:)'],...
+Iters = [RNEA_iLQR_store(row,:)',ABA_iLQR_store(row,:)',...
+    ABA_store(row,:)',RNEA_store(row,:)',modRNEA_store(row,:)',Old_store(row,:)'];
+Itr = boxplot(Iters,...
     'labels',labels); 
 xtickangle(20);
 set(gca,'FontSize',12);
 set(Itr,'LineWidth', 2);
 L = gca;
+% set(gca, 'YScale', 'log'); 
 L.XAxis.TickLabelInterpreter = 'latex';
 ylabel('Iterations','Interpreter','latex')
 

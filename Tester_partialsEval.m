@@ -51,7 +51,7 @@ for Nb = Nb_lst
     sztau = sz; sztau(end)= sz(end)-1;
 
     % Optional, check all of the methods for computing the partials to make sure they agree
-    CheckPartials = 1;   
+    CheckPartials = 0;   
     if CheckPartials
         disp('==========================')
         disp('First order partials of q')
@@ -237,6 +237,8 @@ end
 
 %%
 save ADcheckerData.mat
+%%
+
 figure(1);
 clf
 %subplot(211)
@@ -259,7 +261,7 @@ leg{2} = 'First-Order Partials of $\ddot{\mathbf{q}}$ via RNEA';
 if second_order
     leg{3} = 'Second-Order partials of ${\eta}^T\ddot{\mathbf{q}}$ via ABA (Direct)'; %find me
     leg{4} = 'Second-Order Partials of ${\eta}^T\ddot{\mathbf{q}}$ via RNEA';
-    leg{5} = 'Second-Order Partials of ${\eta}^T\ddot{\mathbf{q}}$ via ABA (direct, alternate strategy)';
+    leg{5} = 'Second-Order Partials of ${\eta}^T\ddot{\mathbf{q}}$ via ABA V2(direct, alternate strategy)';
     leg{6} = 'Second-Order Partials of ${\eta}^T\ddot{\mathbf{q}}$ via mod RNEA'; 
     leg{7} = 'Second-Order Partials of ${\eta}^T\ddot{\mathbf{q}}$ via Tensor Contraction';
 end
