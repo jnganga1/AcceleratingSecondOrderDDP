@@ -5,7 +5,6 @@ addpath([pwd '/algorithm']);
 addpath([pwd '/support']);
 addpath([pwd '/spatial_v2']); %using a local copy of spatialV2
 addpath(genpath([pwd '/spatial_v2_casadi']));
-addpath(genpath([pwd])); %adds everything. Supersedes above adds
 
 import casadi.*
 warning('off','all')

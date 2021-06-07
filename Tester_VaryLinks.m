@@ -4,6 +4,8 @@
 %Compares Suboptimality vs Iterations 
 %Compares EvaluationTime vs number of links
 
+addpath(genpath([pwd])); %adds everything. Supersedes above adds
+
 %Select robot here - ensures all code runs the same thing
 rbtNmber =1;
 x0_diff = 0.15;

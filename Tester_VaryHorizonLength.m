@@ -16,6 +16,8 @@
 
 %Select robot here - ensures all code runs the same thing
 rbtNmber =1;
+addpath(genpath([pwd])); %adds everything. Supersedes above adds
+
 
 %% Make sure scripts run want you want!!! check 
 %% DDP_Regular_ABA_Methods(); DDP_RegularRNEA(); DDP_Regular_OldMethod();
