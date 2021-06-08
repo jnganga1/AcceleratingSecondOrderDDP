@@ -13,3 +13,6 @@ MinimalExample_TensorVsRNEA_4Links.m
 MinimalExample_TensorVsRNEA_4Links.m
 DeleteMeLater2.m
 LastRun.m
+ignoreGit/Tester_VaryHorizonLength.m
+ignoreGit/ABA_VaryLink_Regen.m
+ignoreGit/RepeatABARNEA.m
