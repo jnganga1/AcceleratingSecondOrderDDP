@@ -31,6 +31,7 @@ num_sims =40;
 cd 'DDP_Regular_ABA_Methods - LBRModel'
 
 addpath(genpath('../casadi-windows-matlabR2016a-v3.5.3'));
+addpath(genpath('../casadi-linux-matlabR2014b-v3.5.5'));
 addpath(genpath('../spatial_v2'));
 addpath(genpath('../spatial_v2_casadi')); 
 addpath(genpath([pwd])); %adds everything. Supersedes above adds

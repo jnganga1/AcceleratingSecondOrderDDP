@@ -1,5 +1,5 @@
 %setup function - don't run alone 
-%assumes variable Nb x0_diff exist in the workspace
+%assumes variable Nb x0_diff exists in the workspace
 
 addpath([pwd '/algorithm']);
 addpath([pwd '/support']);

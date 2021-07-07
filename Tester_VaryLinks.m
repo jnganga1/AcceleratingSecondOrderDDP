@@ -12,7 +12,7 @@ x0_diff = 0.15;
 
 N = 400;
 % nbd = [2 3 4 5 7 9 12 16 22 26 30];
-nbd = [2 4 6 10 15 19 20]; % 25 30];
+nbd = [2 4 7 10 15 19 20]; % 25 30];
 % nbd=[20 25 30 35 40]%16 20];
 % nbd = 15;
 
@@ -116,9 +116,10 @@ end
 %}
 %%
 1==1;
+save  TesterVaryLinks.mat
 % Some plots
 
-nbd = [2 4 6 10 15 19 20];
+nbd = [2 4 7 10 15 19 20];
 figure;
 hold on;
 set(gca, 'YScale','log');
